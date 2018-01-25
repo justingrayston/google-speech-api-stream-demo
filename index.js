@@ -24,7 +24,11 @@ const request = {
   config: {
     encoding: encoding,
     sampleRateHertz: sampleRateHertz,
-    languageCode: languageCode
+    languageCode: languageCode,
+    // Made up Phrases to pass to the API
+    speechContexts: {
+      phrases: ['The FocksHammer', 'JarMonkey', 'HalulaBeeBop']
+    }
   },
   interimResults: false // If you want interim results, set this to true
 };
@@ -32,11 +36,16 @@ const request = {
 // Create a recognize stream
 const recognizeStream = speech.streamingRecognize(request)
   .on('error', console.error)
-  .on('data', (data) =>
-      process.stdout.write(
-        (data.results[0] && data.results[0].alternatives[0])
-          ? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
-          : `\n\nReached transcription time limit, press Ctrl+C\n`));
+  .on('data', (data) => {
+    // To see full response, uncomment bellow
+    // process.stdout.write(`${JSON.stringify(data.results)}`);
+    process.stdout.write(
+      (data.results[0] && data.results[0].alternatives[0])
+        ? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
+        : `\n\nReached transcription time limit, press Ctrl+C\n`);
+  });
+
+
 
 // Start recording and send the microphone input to the Speech API
 record
