@@ -1,11 +1,11 @@
 const record = require('node-record-lpcm16');
 
 // Imports the Google Cloud client library
-const Speech = require('@google-cloud/speech');
+const speech = require('@google-cloud/speech').v1p1beta1;
 
 
 // Instantiates a client
-const speech = Speech(
+const client = new speech.SpeechClient(
   {
     projectId: process.env.PROJECT_ID
   }
@@ -26,23 +26,30 @@ const request = {
     sampleRateHertz: sampleRateHertz,
     languageCode: languageCode,
     // Made up Phrases to pass to the API
-    speechContexts: {
-      phrases: ['The FocksHammer', 'JarMonkey', 'HalulaBeeBop']
-    }
+    speechContexts: []
   },
-  interimResults: false // If you want interim results, set this to true
+  interimResults: true // If you want interim results, set this to true
 };
 
+function getOutput(data) {
+  const endString = `\n\nReached transcription time limit, press Ctrl+C\n`;
+  if (data.results[0] && data.results[0].alternatives[0]) {
+    const final = data.results[0].isFinal;
+    return `Transcription (isFinal ${final}): ${data.results[0].alternatives[0].transcript}\n`
+  }
+
+  return endString;
+}
+
 // Create a recognize stream
-const recognizeStream = speech.streamingRecognize(request)
+const recognizeStream = client.streamingRecognize(request)
   .on('error', console.error)
   .on('data', (data) => {
     // To see full response, uncomment bellow
     // process.stdout.write(`${JSON.stringify(data.results)}`);
-    process.stdout.write(
-      (data.results[0] && data.results[0].alternatives[0])
-        ? `Transcription: ${data.results[0].alternatives[0].transcript}\n`
-        : `\n\nReached transcription time limit, press Ctrl+C\n`);
+    const output = getOutput(data);
+    process.stdout.write(output);
+
   });
 
 
